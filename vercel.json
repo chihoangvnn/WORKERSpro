@@ -1,18 +1,9 @@
 {
   "version": 2,
-  "name": "autoposting-worker",
-  "regions": ["iad1"],
   "functions": {
     "api/worker.js": {
       "runtime": "nodejs18.x",
       "maxDuration": 60
     }
-  },
-  "env": {
-    "BRAIN_BASE_URL": "@brain-base-url",
-    "WORKER_ID": "@worker-id",
-    "WORKER_REGION": "@worker-region",
-    "WORKER_PLATFORMS": "@worker-platforms",
-    "WORKER_REGISTRATION_SECRET": "@worker-registration-secret"
   }
 }
