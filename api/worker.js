@@ -32,10 +32,41 @@ let workerToken = null;
 let tokenExpiry = null;
 
 /**
+ * Get client IP address from request headers
+ */
+function getClientIP(req) {
+  // Try different headers in order of preference
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const realIP = req.headers['x-real-ip'];
+  const cfConnectingIP = req.headers['cf-connecting-ip']; // Cloudflare
+  const clientIP = req.headers['x-client-ip'];
+  
+  // X-Forwarded-For can contain multiple IPs, take the first one
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  
+  // Try other headers
+  if (realIP) return realIP;
+  if (cfConnectingIP) return cfConnectingIP;
+  if (clientIP) return clientIP;
+  
+  // Fallback to connection remote address
+  return req.connection?.remoteAddress || 
+         req.socket?.remoteAddress || 
+         (req.connection?.socket ? req.connection.socket.remoteAddress : null) ||
+         'unknown';
+}
+
+/**
  * Main Vercel serverless function handler
  */
 export default async function handler(req, res) {
+  // Get client IP
+  const clientIP = getClientIP(req);
+  
   console.log(`🚀 Vercel Worker ${WORKER_ID} started in region ${WORKER_REGION}`);
+  console.log(`🌐 Client IP: ${clientIP}`);
   
   // CORS headers for cross-origin requests
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -69,6 +100,7 @@ export default async function handler(req, res) {
         region: WORKER_REGION,
         platforms: WORKER_PLATFORMS
       },
+      clientIP: clientIP,
       result,
       processedAt: new Date().toISOString()
     });
@@ -83,6 +115,7 @@ export default async function handler(req, res) {
         id: WORKER_ID,
         region: WORKER_REGION
       },
+      clientIP: clientIP,
       errorAt: new Date().toISOString()
     });
   }
